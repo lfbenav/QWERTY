@@ -32,3 +32,36 @@ QWERTY remembers previous exchanges to keep context across turns.
 ### Web Search Capability
 When explicitly requested, QWERTY performs real-time searches on the web to expand its knowledge.
 <img width="1727" height="766" alt="image" src="https://github.com/user-attachments/assets/c8c1ec8d-a85f-44b3-80e2-cd6f409d17f7" />
+
+## Architecture
+
+QWERTY follows a modular RAG (Retrieval-Augmented Generation) architecture implemented in Python using `LangChain`, `Streamlit`, and `Ollama`.
+Its workflow can be summarized in six main stages:
+
+1. ### Data Ingestion & Cleaning  
+Class notes in PDF format are read using `pdfminer` and converted into plain text. Each document is normalized; accents, special characters, and extra spaces are removed to ensure clean input for embedding generation.
+
+2. ### Text Segmentation  
+Two segmentation strategies are implemented for empirical comparison:
+
+  - **Fixed segmentation**: splits the text into fixed-length chunks with overlap.
+
+  - **Semantic segmentation**: groups sentences using nltk sentence tokenization, preserving contextual coherence.
+
+3. ### Embeddings & Vector Databases  
+Each chunk is converted into a 768-dimensional semantic vector using the `intfloat/multilingual-e5-base model`. Embeddings are stored in `Chroma` vector databases (one per segmentation type) for efficient similarity-based retrieval.
+
+4. ### Tools Layer
+
+- **RAG Tools**: Two retrieval tools access the corresponding Chroma databases (fixed and semantic).  
+
+- **WebSearch Tool**: Uses SerpAPI to query the web and format relevant snippets with sources and links.  
+
+These tools are orchestrated dynamically depending on the user’s query intent.
+
+5. ### Agent Orchestration & Memory
+
+The main conversational agent is orchestrated through `LangChain` and powered by `LLaMA 3.2` (Ollama). A lightweight temporary memory buffer stores the last conversation turns, allowing QWERTY to recall and follow up on previous exchanges naturally.
+
+6. ### User Interface
+The agent runs through a `Streamlit` web app, providing a clean and responsive chat interface. Users can choose the segmentation mode (semantic or fixed), view contextual answers, and request web searches interactively.
